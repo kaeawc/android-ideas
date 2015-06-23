@@ -1,0 +1,128 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.neenbedankt.android-apt'
+
+// Manifest version information!
+int versionMajor = 1
+int versionMinor = 0
+int versionPatch = 0
+int versionBuild = 0 // bump for dogfood builds, public betas, etc.
+
+String gitSha = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
+String buildTime = new Date().format("yyyy-MM-dd'T'HH:mm'Z'", TimeZone.getTimeZone("UTC"))
+
+boolean isTravis = "true".equals(System.getenv("TRAVIS"))
+println("isTravis: ${isTravis}")
+boolean preDexEnabled = "true".equals(System.getProperty("pre-dex", "true"))
+println("preDexEnabled: ${preDexEnabled}")
+boolean usePreDex = preDexEnabled && !isTravis
+println("usePreDex: ${usePreDex}")
+
+String LONG = "long"
+String BOOLEAN = "boolean"
+String TRUE = "true"
+String FALSE = "false"
+
+android {
+
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+
+    dexOptions {
+        javaMaxHeapSize "4g"
+        // Skip pre-dexing when running on Travis CI or when disabled via -Dpre-dex=false.
+        preDexLibraries = usePreDex
+    }
+
+    defaultConfig {
+        applicationId "io.kaeawc.ideas.app"
+        minSdkVersion 18
+        targetSdkVersion 22
+        versionCode versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
+        versionName "${versionMajor}.${versionMinor}.${versionPatch}"
+
+        buildConfigField "String", "GIT_SHA", "\"${gitSha}\""
+        buildConfigField "String", "BUILD_TIME", "\"${buildTime}\""
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.dev'
+            versionNameSuffix '-dev'
+            debuggable true
+            minifyEnabled false
+        }
+        release {
+            debuggable false
+            minifyEnabled true
+            zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    packagingOptions {
+        exclude 'asm-license.txt'
+        exclude 'LICENSE'
+        exclude 'LICENSE.txt'
+        exclude "META-INF/LICENSE"
+        exclude "META-INF/NOTICE"
+        exclude "META-INF/license"
+        exclude "META-INF/notice"
+        exclude "META-INF/LICENSE.txt"
+        exclude "META-INF/license.txt"
+        exclude "META-INF/NOTICE.txt"
+        exclude "META-INF/notice.txt"
+        exclude 'NOTICE'
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+}
+
+apt {
+    arguments {
+        androidManifestFile variant.outputs[0].processResources.manifestFile
+        resourcePackageName 'io.kaeawc.ideas.app'
+    }
+}
+
+dependencies {
+
+    // Google Support Library
+    compile 'com.android.support:support-annotations:22.2.0'
+    compile 'com.android.support:appcompat-v7:22.2.0'
+
+    // Google Play Services
+    compile 'com.google.android.gms:play-services-gcm:7.5.0'
+    compile 'com.google.android.gms:play-services-location:7.5.0'
+
+    // JSON parsing
+    compile 'com.google.code.gson:gson:2.3.1'
+
+    // EventBus
+    compile 'de.greenrobot:eventbus:2.4.0'
+
+    // Logging
+    compile 'com.jakewharton.timber:timber:3.1.0'
+
+    // Memory leak detection
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.3.1'
+    releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.3.1'
+
+    // Unit Testing
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:1.10.19'
+    testCompile 'org.assertj:assertj-core:3.0.0'
+    testCompile 'org.powermock:powermock-core:1.6.2'
+    testCompile 'org.powermock:powermock-module-junit4:1.6.2'
+    testCompile 'org.powermock:powermock-api-mockito:1.6.2'
+
+    compile project(':frame')
+}

@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Ideas</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="average_vsync_label">Average Vsync:</string>
+    <string name="sampled_label">Sampled:</string>
+</resources>
